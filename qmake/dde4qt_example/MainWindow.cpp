@@ -12,7 +12,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+  urlProtocolHandler.remove();
+  delete ui;
 }
 
 void MainWindow::onProtocolActivate(const QUrl& url) {
