@@ -74,25 +74,30 @@ namespace win32 {
     QUrlProtocolHandler(const QString& schema, const QString& application = QCoreApplication::applicationName(), const QString& topic = QStringLiteral("System"), QObject* parent=nullptr) :
       QObject(parent),
       ddeFilter(application, topic, this),
-      schema(schema) {
-      if (!schema.isEmpty()) {
-        QSettings registry(QString("HKEY_CURRENT_USER\\SOFTWARE\\Classes\\%1").arg(schema), QSettings::NativeFormat);
-        registry.setValue("URL Protocol", "");
-        registry.setValue("shell/open/command/.", QCoreApplication::instance()->arguments().at(0));
-        registry.setValue("shell/open/ddeexec/.", "%1");
-        registry.setValue("shell/open/ddeexec/application/.", application);
-        registry.setValue("shell/open/ddeexec/topic/.", topic);
-        registry.sync();
-        connect(&ddeFilter, &QDdeFilter::command, this, &QUrlProtocolHandler::onCommand);
-        QCoreApplication::instance()->installNativeEventFilter(&ddeFilter);
-      }
+      schema(schema),
+      application(application),
+      topic(topic) {
+      connect(&ddeFilter, &QDdeFilter::command, this, &QUrlProtocolHandler::onCommand);
+      QCoreApplication::instance()->installNativeEventFilter(&ddeFilter);
     }
 
     ~QUrlProtocolHandler() {
       QCoreApplication::instance()->removeNativeEventFilter(&ddeFilter);
     }
 
-    void remove() {
+    void install(const QString& applicationPath = QCoreApplication::instance()->arguments().at(0)) {
+      if (!schema.isEmpty()) {
+        QSettings registry(QString("HKEY_CURRENT_USER\\SOFTWARE\\Classes\\%1").arg(schema), QSettings::NativeFormat);
+        registry.setValue("URL Protocol", "");
+        registry.setValue("shell/open/command/.", applicationPath);
+        registry.setValue("shell/open/ddeexec/.", "%1");
+        registry.setValue("shell/open/ddeexec/application/.", application);
+        registry.setValue("shell/open/ddeexec/topic/.", topic);
+        registry.sync();        
+      }
+    }
+
+    void uninstall() {
       // Prevent catastrophic removal of all Classes subkey
       if (!schema.isEmpty()) {
         QSettings registry(QString("HKEY_CURRENT_USER\\SOFTWARE\\Classes"), QSettings::NativeFormat);
@@ -107,6 +112,8 @@ namespace win32 {
 
   private:
     const QString schema;
+    const QString application;
+    const QString topic;
     QDdeFilter ddeFilter;
   };
 } // win32

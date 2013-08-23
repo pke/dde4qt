@@ -7,12 +7,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     connect(&urlProtocolHandler, &win32::QUrlProtocolHandler::activate, this, &MainWindow::onProtocolActivate);
+    urlProtocolHandler.install();
     ui->setupUi(this);
 }
 
 MainWindow::~MainWindow()
 {
-  urlProtocolHandler.remove();
+  urlProtocolHandler.uninstall();
   delete ui;
 }
 
